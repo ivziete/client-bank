@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: client-bank
+  name: client-bank
+  namespace: sicam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client-bank
+  template:
+    metadata:
+      labels:
+        app: client-bank
+    spec:
+      containers:
+      - image: sicami.clinicaamericana.org.pe/client-bank
+        env:
+         - name: SPRING_PROFILES_ACTIVE
+           value: prod
+        name: client-bank
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: client-bank
+  name: client-bank
+  namespace: sicam
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  selector:
+    app: client-bank
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: client-bank
+  namespace: sicam
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - secretName: clinicaamericana
+  rules:
+  - host: client-bank.clinicaamericana.org.pe
+    http:
+      paths:
+      - backend:
+          serviceName: client-bank
+          servicePort: 80
